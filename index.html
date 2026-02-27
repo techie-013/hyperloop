@@ -1,370 +1,1836 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>DIMENSION 2 · REALISTIC MAP & ROUTE · DELHI–JAIPUR HYPERLOOP (NH-48)</title>
-  <!-- ultra detailed, 2500+ lines, with real route map, stopping points, verified data -->
-  <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VAAYU | India's First Hyperloop</title>
+    <!-- GSAP for Professional Animations -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/MotionPathPlugin.min.js"></script>
+    <!-- Three.js for 3D -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Poppins', 'Segoe UI', sans-serif;
+        }
 
-    body {
-      background: #e7f0fd;
-      font-family: 'Inter', 'Segoe UI', system-ui, sans-serif;
-      color: #0a263c;
-      line-height: 1.5;
-      padding: 2rem 1.2rem;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-    }
+        body {
+            background: #030514;
+            color: white;
+            overflow-x: hidden;
+        }
 
-    .real-world {
-      max-width: 1600px;
-      width: 100%;
-      background: rgba(255,255,255,0.85);
-      backdrop-filter: blur(5px);
-      border-radius: 3rem 3rem 2rem 2rem;
-      box-shadow: 0 30px 60px -20px #022b4e;
-      padding: 2.2rem 2rem;
-      border: 1px solid #ffffff;
-    }
+        /* Custom Cursor */
+        .cursor {
+            width: 20px;
+            height: 20px;
+            border: 2px solid #00ff9d;
+            border-radius: 50%;
+            position: fixed;
+            pointer-events: none;
+            z-index: 9999;
+            mix-blend-mode: difference;
+            transition: 0.1s;
+        }
 
-    h1 {
-      font-size: 3rem;
-      font-weight: 800;
-      letter-spacing: -0.02em;
-      background: linear-gradient(165deg, #003f6b, #21679c);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
-      margin-bottom: 0.3rem;
-    }
+        /* Loading Screen */
+        .loader {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #030514;
+            z-index: 10000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            transition: 1s;
+        }
 
-    h2 {
-      font-size: 2.2rem;
-      font-weight: 700;
-      margin: 2.2rem 0 1.2rem 0;
-      border-left: 16px solid #1e6ec7;
-      padding-left: 1.5rem;
-      background: linear-gradient(to right, #ecf5ff, transparent);
-    }
+        .loader.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
 
-    h3 {
-      font-size: 1.8rem;
-      font-weight: 650;
-      margin-top: 1.8rem;
-      margin-bottom: 1rem;
-    }
+        .loader-content {
+            text-align: center;
+        }
 
-    .map-container {
-      background: #1d364b;
-      border-radius: 3rem;
-      padding: 1.8rem;
-      box-shadow: 0 30px 40px -15px #0a1a2a;
-      margin: 2rem 0 1rem 0;
-      border: 2px solid #aad0ff;
-    }
+        .hyperloop-loader {
+            width: 200px;
+            height: 4px;
+            background: #1a2a3a;
+            margin: 20px 0;
+            position: relative;
+            overflow: hidden;
+        }
 
-    .map-svg {
-      width: 100%;
-      height: auto;
-      filter: drop-shadow(0 8px 12px #00000040);
-      border-radius: 2rem;
-    }
+        .hyperloop-loader::after {
+            content: '';
+            position: absolute;
+            width: 40%;
+            height: 100%;
+            background: #00ff9d;
+            animation: loading 2s ease-in-out infinite;
+        }
 
-    .route-badge {
-      display: inline-block;
-      background: #1b4a76;
-      color: white;
-      padding: 0.5rem 2rem;
-      border-radius: 40px;
-      font-size: 1.2rem;
-      font-weight: 600;
-      margin: 0.8rem 0.5rem 0 0;
-    }
+        @keyframes loading {
+            0% { left: -40%; }
+            100% { left: 100%; }
+        }
 
-    .stop-point {
-      background: white;
-      border-radius: 2rem;
-      padding: 1.2rem 1.8rem;
-      box-shadow: 0 8px 18px -8px #145388;
-      border-left: 12px solid;
-      margin: 1rem 0;
-    }
+        /* Navigation */
+        nav {
+            position: fixed;
+            top: 0;
+            width: 100%;
+            padding: 30px 50px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 1000;
+            mix-blend-mode: difference;
+            transition: 0.3s;
+        }
 
-    .grid-2 {
-      display: grid;
-      grid-template-columns: repeat(2,1fr);
-      gap: 2rem;
-    }
+        nav.scrolled {
+            padding: 15px 50px;
+            background: rgba(3, 5, 20, 0.8);
+            backdrop-filter: blur(10px);
+            mix-blend-mode: normal;
+        }
 
-    .grid-3 {
-      display: grid;
-      grid-template-columns: repeat(3,1fr);
-      gap: 1.5rem;
-    }
+        .logo {
+            font-size: 28px;
+            font-weight: 700;
+            letter-spacing: 2px;
+            background: linear-gradient(45deg, #fff, #00ff9d);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
 
-    .card {
-      background: white;
-      border-radius: 2rem;
-      padding: 1.5rem 1.8rem;
-      box-shadow: 0 12px 28px -18px #0f3d66;
-    }
+        .nav-links {
+            display: flex;
+            gap: 40px;
+        }
 
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      background: white;
-      border-radius: 2rem;
-      overflow: hidden;
-      box-shadow: 0 8px 20px -10px #6b9fd0;
-      margin: 1.5rem 0;
-    }
+        .nav-links a {
+            color: white;
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 500;
+            letter-spacing: 1px;
+            position: relative;
+            padding: 5px 0;
+        }
 
-    th {
-      background: #003153;
-      color: white;
-      font-weight: 600;
-      padding: 1rem 1.2rem;
-      font-size: 1.1rem;
-    }
+        .nav-links a::before {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 0;
+            height: 2px;
+            background: #00ff9d;
+            transition: 0.3s;
+        }
 
-    td {
-      padding: 1rem 1.2rem;
-      border-bottom: 1px solid #cdddec;
-    }
+        .nav-links a:hover::before {
+            width: 100%;
+        }
 
-    .highlight {
-      background: #dff0ff;
-      font-weight: 600;
-    }
+        /* Hero Section */
+        .hero {
+            height: 100vh;
+            position: relative;
+            overflow: hidden;
+        }
 
-    .footer-box {
-      background: #0f2a3f;
-      color: white;
-      border-radius: 3rem;
-      padding: 2.5rem;
-      margin-top: 3rem;
-      border: 2px solid #ffbe5c;
-      text-align: center;
-    }
+        #canvas-3d {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+        }
 
-    .small-note {
-      font-size: 0.95rem;
-      color: #2f506d;
-    }
+        .hero-content {
+            position: absolute;
+            top: 50%;
+            left: 10%;
+            transform: translateY(-50%);
+            z-index: 2;
+            color: white;
+            max-width: 800px;
+        }
 
-    .real-marker {
-      display: flex;
-      align-items: center;
-      gap: 0.8rem;
-    }
-  </style>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700;14..32,800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+        .hero-subtitle {
+            font-size: 14px;
+            letter-spacing: 8px;
+            text-transform: uppercase;
+            color: #00ff9d;
+            margin-bottom: 20px;
+            opacity: 0;
+            transform: translateY(30px);
+        }
+
+        .hero-title {
+            font-size: 100px;
+            font-weight: 800;
+            line-height: 1;
+            margin-bottom: 20px;
+            opacity: 0;
+            transform: translateY(30px);
+        }
+
+        .hero-title span {
+            background: linear-gradient(45deg, #fff, #00ff9d);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .hero-description {
+            font-size: 18px;
+            color: #8892b0;
+            margin-bottom: 40px;
+            max-width: 600px;
+            opacity: 0;
+            transform: translateY(30px);
+        }
+
+        .hero-stats {
+            display: flex;
+            gap: 60px;
+            opacity: 0;
+            transform: translateY(30px);
+        }
+
+        .stat-item {
+            text-align: left;
+        }
+
+        .stat-number {
+            font-size: 40px;
+            font-weight: 700;
+            color: #00ff9d;
+        }
+
+        .stat-label {
+            font-size: 12px;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            color: #8892b0;
+        }
+
+        .scroll-indicator {
+            position: absolute;
+            bottom: 50px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 2;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+            color: white;
+            font-size: 12px;
+            letter-spacing: 2px;
+            opacity: 0;
+            animation: fadeInUp 2s ease 2s forwards;
+        }
+
+        .scroll-line {
+            width: 2px;
+            height: 60px;
+            background: linear-gradient(to bottom, #00ff9d, transparent);
+            animation: scrollDown 2s ease-in-out infinite;
+        }
+
+        @keyframes scrollDown {
+            0% { transform: scaleY(0); transform-origin: top; }
+            50% { transform: scaleY(1); transform-origin: top; }
+            50.1% { transform: scaleY(1); transform-origin: bottom; }
+            100% { transform: scaleY(0); transform-origin: bottom; }
+        }
+
+        /* Dimensions Navigation */
+        .dimension-nav {
+            position: sticky;
+            top: 80px;
+            z-index: 100;
+            background: rgba(3, 5, 20, 0.9);
+            backdrop-filter: blur(10px);
+            padding: 20px 0;
+            border-bottom: 1px solid rgba(0, 255, 157, 0.1);
+        }
+
+        .dimension-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            padding: 0 50px;
+        }
+
+        .dimension-tab {
+            color: #8892b0;
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 600;
+            letter-spacing: 1px;
+            padding: 10px 20px;
+            border-radius: 30px;
+            transition: 0.3s;
+            position: relative;
+            cursor: pointer;
+        }
+
+        .dimension-tab.active {
+            color: #00ff9d;
+            background: rgba(0, 255, 157, 0.1);
+        }
+
+        .dimension-tab::before {
+            content: '';
+            position: absolute;
+            bottom: -2px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 0;
+            height: 2px;
+            background: #00ff9d;
+            transition: 0.3s;
+        }
+
+        .dimension-tab.active::before {
+            width: 30px;
+        }
+
+        /* Dimension Sections */
+        .dimension-section {
+            min-height: 100vh;
+            padding: 100px 50px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .dimension-bg {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+        }
+
+        .dimension-bg canvas {
+            width: 100%;
+            height: 100%;
+            opacity: 0.1;
+        }
+
+        .dimension-content {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .dimension-header {
+            margin-bottom: 60px;
+        }
+
+        .dimension-number {
+            font-size: 14px;
+            color: #00ff9d;
+            letter-spacing: 4px;
+            margin-bottom: 10px;
+        }
+
+        .dimension-title {
+            font-size: 60px;
+            font-weight: 700;
+            margin-bottom: 20px;
+            background: linear-gradient(45deg, #fff, #00ff9d);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .dimension-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 40px;
+        }
+
+        .dimension-card {
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid rgba(0, 255, 157, 0.1);
+            border-radius: 20px;
+            padding: 40px;
+            backdrop-filter: blur(10px);
+            transition: 0.3s;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .dimension-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(0, 255, 157, 0.1), transparent);
+            transition: 0.5s;
+        }
+
+        .dimension-card:hover::before {
+            left: 100%;
+        }
+
+        .dimension-card:hover {
+            border-color: #00ff9d;
+            transform: translateY(-10px);
+            box-shadow: 0 20px 40px rgba(0, 255, 157, 0.1);
+        }
+
+        .card-icon {
+            font-size: 40px;
+            color: #00ff9d;
+            margin-bottom: 20px;
+        }
+
+        .card-title {
+            font-size: 24px;
+            font-weight: 600;
+            margin-bottom: 15px;
+        }
+
+        .card-value {
+            font-size: 48px;
+            font-weight: 700;
+            color: #00ff9d;
+            margin-bottom: 15px;
+        }
+
+        .card-desc {
+            color: #8892b0;
+            line-height: 1.6;
+        }
+
+        .card-list {
+            list-style: none;
+            margin-top: 20px;
+        }
+
+        .card-list li {
+            color: #8892b0;
+            margin-bottom: 10px;
+            padding-left: 20px;
+            position: relative;
+        }
+
+        .card-list li::before {
+            content: '→';
+            position: absolute;
+            left: 0;
+            color: #00ff9d;
+        }
+
+        /* Live Dashboard */
+        .live-dashboard {
+            background: rgba(0, 255, 157, 0.02);
+            border-radius: 30px;
+            padding: 40px;
+            margin-top: 60px;
+            border: 1px solid rgba(0, 255, 157, 0.2);
+        }
+
+        .dashboard-title {
+            font-size: 24px;
+            margin-bottom: 30px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .live-badge {
+            background: #00ff9d;
+            color: #030514;
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 30px;
+        }
+
+        .dashboard-item {
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 20px;
+            padding: 25px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .dashboard-item::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, #00ff9d, transparent);
+            animation: scan 2s linear infinite;
+        }
+
+        @keyframes scan {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(100%); }
+        }
+
+        .dashboard-label {
+            font-size: 14px;
+            color: #8892b0;
+            margin-bottom: 10px;
+        }
+
+        .dashboard-number {
+            font-size: 36px;
+            font-weight: 700;
+            color: #00ff9d;
+            margin-bottom: 10px;
+        }
+
+        .dashboard-unit {
+            font-size: 14px;
+            color: #8892b0;
+            margin-left: 5px;
+        }
+
+        .dashboard-progress {
+            width: 100%;
+            height: 4px;
+            background: #1a2a3a;
+            border-radius: 2px;
+            overflow: hidden;
+        }
+
+        .dashboard-progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, #00ff9d, #00cc7a);
+            width: 0%;
+            transition: width 0.3s;
+        }
+
+        /* Route Map */
+        .route-container {
+            display: grid;
+            grid-template-columns: 1fr 300px;
+            gap: 40px;
+            background: rgba(255, 255, 255, 0.02);
+            border-radius: 30px;
+            padding: 40px;
+            border: 1px solid rgba(0, 255, 157, 0.1);
+        }
+
+        #route-canvas {
+            width: 100%;
+            height: 500px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 20px;
+            position: relative;
+        }
+
+        .station-panel {
+            background: rgba(255, 255, 255, 0.02);
+            border-radius: 20px;
+            padding: 30px;
+        }
+
+        .station-item {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 25px;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+
+        .station-item:hover {
+            transform: translateX(10px);
+        }
+
+        .station-marker {
+            width: 12px;
+            height: 12px;
+            background: #00ff9d;
+            border-radius: 50%;
+            position: relative;
+        }
+
+        .station-marker::before {
+            content: '';
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            background: rgba(0, 255, 157, 0.3);
+            border-radius: 50%;
+            top: -4px;
+            left: -4px;
+            animation: ping 2s infinite;
+        }
+
+        @keyframes ping {
+            0% { transform: scale(1); opacity: 1; }
+            100% { transform: scale(2); opacity: 0; }
+        }
+
+        .station-info {
+            flex: 1;
+        }
+
+        .station-name {
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+
+        .station-distance {
+            font-size: 12px;
+            color: #8892b0;
+        }
+
+        .station-time {
+            color: #00ff9d;
+            font-weight: 600;
+        }
+
+        /* Comparison Matrix */
+        .comparison-matrix {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 20px;
+            margin-top: 40px;
+        }
+
+        .matrix-header {
+            text-align: center;
+            padding: 20px;
+            background: rgba(0, 255, 157, 0.1);
+            border-radius: 15px 15px 0 0;
+            font-weight: 600;
+        }
+
+        .matrix-row {
+            display: contents;
+        }
+
+        .matrix-cell {
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.02);
+            border-bottom: 1px solid rgba(0, 255, 157, 0.1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .winner-badge {
+            background: #00ff9d;
+            color: #030514;
+            padding: 3px 10px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        /* 3D Pod Viewer */
+        .pod-viewer {
+            height: 400px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 20px;
+            margin-top: 40px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        #pod-canvas {
+            width: 100%;
+            height: 100%;
+        }
+
+        .pod-controls {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            display: flex;
+            gap: 10px;
+            z-index: 10;
+        }
+
+        .pod-control-btn {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: rgba(0, 255, 157, 0.2);
+            border: 1px solid #00ff9d;
+            color: #00ff9d;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+
+        .pod-control-btn:hover {
+            background: #00ff9d;
+            color: #030514;
+        }
+
+        /* Economics Graph */
+        .graph-container {
+            height: 400px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 20px;
+            padding: 30px;
+            position: relative;
+        }
+
+        #graph-canvas {
+            width: 100%;
+            height: 100%;
+        }
+
+        .graph-tooltip {
+            position: absolute;
+            background: rgba(0, 255, 157, 0.9);
+            color: #030514;
+            padding: 10px;
+            border-radius: 10px;
+            font-size: 12px;
+            pointer-events: none;
+            opacity: 0;
+            transition: 0.3s;
+        }
+
+        /* Footer */
+        footer {
+            padding: 100px 50px 50px;
+            background: #010208;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .footer-grid {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: 2fr 1fr 1fr 1fr;
+            gap: 60px;
+            margin-bottom: 60px;
+        }
+
+        .footer-logo {
+            font-size: 32px;
+            font-weight: 700;
+            background: linear-gradient(45deg, #fff, #00ff9d);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 20px;
+        }
+
+        .footer-text {
+            color: #8892b0;
+            line-height: 1.6;
+        }
+
+        .footer-links h4 {
+            color: #fff;
+            margin-bottom: 20px;
+            font-size: 18px;
+        }
+
+        .footer-links a {
+            display: block;
+            color: #8892b0;
+            text-decoration: none;
+            margin-bottom: 10px;
+            transition: 0.3s;
+        }
+
+        .footer-links a:hover {
+            color: #00ff9d;
+            transform: translateX(5px);
+        }
+
+        .footer-bottom {
+            text-align: center;
+            padding-top: 50px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            color: #8892b0;
+        }
+
+        /* Floating Elements */
+        .floating {
+            animation: float 6s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-20px); }
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .hero-title {
+                font-size: 50px;
+            }
+            
+            .dimension-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .dashboard-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .route-container {
+                grid-template-columns: 1fr;
+            }
+            
+            .footer-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .dimension-container {
+                flex-wrap: wrap;
+                gap: 10px;
+            }
+        }
+    </style>
 </head>
 <body>
-<div class="real-world">
+    <!-- Custom Cursor -->
+    <div class="cursor" id="cursor"></div>
 
-  <!-- ========== TITLE ========== -->
-  <h1>🚄 DIMENSION 2 · CIVIL STRATEGY & REALISTIC ROUTE MAP <span style="font-size:1.8rem; background:#dfebf7; padding:0.3rem 2rem; border-radius:60px; margin-left:1.2rem;">NH-48 DELHI–JAIPUR</span></h1>
-  <div style="display: flex; flex-wrap: wrap; gap: 0.8rem; margin: 0.5rem 0 1.5rem;">
-    <span class="route-badge"><i class="fas fa-map-marked-alt"></i> 280 km · 8-lane expressway</span>
-    <span class="route-badge"><i class="fas fa-city"></i> Dwarka sector 21 → JECC Jaipur</span>
-    <span class="route-badge"><i class="fas fa-train"></i> IITM Hyperloop test track 422m (2025)</span>
-  </div>
-
-  <!-- ========== REAL MAP (SVG with actual towns and stops based on NH-48) ========== -->
-  <h2>🗺️ REAL ROUTE MAP · DELHI–JAIPUR EXPRESSWAY (NH-48) WITH HYPERLOOP STOPPING POINTS</h2>
-  <div class="map-container">
-    <svg class="map-svg" viewBox="0 0 950 400" preserveAspectRatio="xMidYMid meet" style="background: #1f3d5a; border-radius: 2.5rem;">
-      <!-- background line: NH-48 corridor -->
-      <path d="M 70 120 L 220 140 L 340 160 L 470 190 L 620 240 L 770 300 L 880 340" stroke="#FFD966" stroke-width="12" fill="none" stroke-dasharray="10 10" opacity="0.8"/>
-      <!-- route line solid (Hyperloop parallel) -->
-      <path d="M 70 110 L 220 130 L 340 150 L 470 180 L 620 230 L 770 290 L 880 330" stroke="#4CAF50" stroke-width="10" fill="none" stroke-linecap="round" />
-      <!-- cities / stops (real names) -->
-      <circle cx="70" cy="100" r="16" fill="#FFC107" stroke="white" stroke-width="4"/>
-      <text x="50" y="70" fill="white" font-weight="bold" font-size="16">DELHI (Dwarka)</text>
-      <circle cx="220" cy="130" r="14" fill="#FFB347" stroke="white" stroke-width="3"/>
-      <text x="200" y="100" fill="white" font-size="14">Gurugram</text>
-      <circle cx="340" cy="150" r="14" fill="#FFB347" stroke="white" stroke-width="3"/>
-      <text x="320" y="120" fill="white" font-size="14">Manesar</text>
-      <circle cx="400" cy="165" r="10" fill="#f9a826" stroke="white" stroke-width="3"/>
-      <text x="370" y="140" fill="white" font-size="12">Bawal</text>
-      <circle cx="470" cy="180" r="14" fill="#FFB347" stroke="white" stroke-width="3"/>
-      <text x="450" y="150" fill="white" font-size="14">Neemrana</text>
-      <circle cx="550" cy="205" r="10" fill="#f9a826" stroke="white" stroke-width="3"/>
-      <text x="520" y="185" fill="white" font-size="12">Behror</text>
-      <circle cx="620" cy="230" r="14" fill="#FFB347" stroke="white" stroke-width="3"/>
-      <text x="600" y="200" fill="white" font-size="14">Kotputli</text>
-      <circle cx="700" cy="270" r="10" fill="#f9a826" stroke="white" stroke-width="3"/>
-      <text x="670" y="250" fill="white" font-size="12">Shahpura</text>
-      <circle cx="770" cy="290" r="14" fill="#FFB347" stroke="white" stroke-width="3"/>
-      <text x="750" y="260" fill="white" font-size="14">Manoharpur</text>
-      <circle cx="820" cy="315" r="10" fill="#f9a826" stroke="white" stroke-width="3"/>
-      <text x="800" y="295" fill="white" font-size="12">Chandwaji</text>
-      <circle cx="880" cy="340" r="18" fill="#FF5722" stroke="white" stroke-width="4"/>
-      <text x="840" y="380" fill="white" font-weight="bold" font-size="18">JAIPUR (JECC)</text>
-      <!-- additional labels -->
-      <text x="120" y="190" fill="#c0e0ff" font-size="14">NH-48 (Delhi–Jaipur Expressway)</text>
-      <text x="500" y="70" fill="#ffd966" font-size="16" font-weight="bold">⏱️ 28 min HYPERLOOP</text>
-    </svg>
-    <p style="color:white; text-align:center; margin-top:1rem; font-size:1.2rem;"><i class="fas fa-check-circle" style="color:#86f0b0;"></i> Real stopping points based on NH-48: Dwarka, Gurugram, Manesar, Bawal, Neemrana, Behror, Kotputli, Shahpura, Manoharpur, Chandwaji, Jaipur industrial zone [citation:1][citation:5]</p>
-  </div>
-
-  <!-- ========== SEGMENT BREAKDOWN with actual km and stops ========== -->
-  <h2>📍 SEGMENT-BASED ROUTE (with real pitstops & features)</h2>
-  <div class="grid-3">
-    <div class="card"><i class="fas fa-flag-checkered" style="color:#c9452c;"></i> <strong>Phase 1 (0–35 km):</strong> Delhi–Gurugram. Elevated, integration with Dwarka Metro & Kherki Toll Plaza. Fully urban.</div>
-    <div class="card"><i class="fas fa-industry"></i> <strong>Phase 2 (35–90 km):</strong> Gurugram–Bawal. IMT Manesar, Pataudi, Dharuhera industrial estates [citation:1].</div>
-    <div class="card"><i class="fas fa-mountain"></i> <strong>Phase 3 (90–160 km):</strong> Bawal–Neemrana–Behror. Aravalli views, Neemrana Fort stop, solar cladding zone [citation:5].</div>
-    <div class="card"><i class="fas fa-leaf"></i> <strong>Phase 4 (160–230 km):</strong> Behror–Kotputli–Shahpura. Semi‑rural, wildlife underpasses, Shahpura Haveli nearby.</div>
-    <div class="card"><i class="fas fa-archway"></i> <strong>Phase 5 (230–280 km):</strong> Manoharpur–Chandwaji–Jaipur. Entry via Daulatpura toll, terminal near JECC, link to Sindhi Camp.</div>
-  </div>
-
-  <!-- ========== REAL STOPPING POINTS (detail) ========== -->
-  <h2>📌 MAJOR STOPPING POINTS (real towns, industrial nodes, last-mile hubs)</h2>
-  <div class="grid-2">
-    <div class="stop-point" style="border-left-color:#2563eb;">
-      <span class="real-marker"><i class="fas fa-map-pin" style="color:#2563eb;"></i> <strong>Delhi terminal (Dwarka Sector 21)</strong></span>
-      <ul>
-        <li>Direct metro to Delhi Airport (8 min) & Connaught Place (22 min) [citation:5]</li>
-        <li>Parking 5000 slots, EV cabs, last‑mile connectivity to IGI T3</li>
-      </ul>
+    <!-- Loader -->
+    <div class="loader" id="loader">
+        <div class="loader-content">
+            <div class="logo" style="font-size: 48px;">VAAYU</div>
+            <div class="hyperloop-loader"></div>
+            <p style="color: #00ff9d;">INITIALIZING HYPERLOOP SYSTEMS...</p>
+        </div>
     </div>
-    <div class="stop-point" style="border-left-color:#3b82f6;">
-      <span class="real-marker"><i class="fas fa-map-pin"></i> <strong>Gurugram (Kherki Dhaula)</strong></span>
-      <ul>
-        <li>Heritage Transport Museum (major tourist stop) [citation:5]</li>
-        <li>Interchange with Dwarka Expressway & new super expressway NH-352B [citation:1]</li>
-      </ul>
-    </div>
-    <div class="stop-point" style="border-left-color:#e67e22;">
-      <span class="real-marker"><i class="fas fa-map-pin"></i> <strong>Manesar</strong></span>
-      <ul><li>IMT Manesar, automotive hub; emergency station possible.</li></ul>
-    </div>
-    <div class="stop-point" style="border-left-color:#e67e22;">
-      <span class="real-marker"><i class="fas fa-map-pin"></i> <strong>Neemrana</strong></span>
-      <ul><li>Neemrana Fort Palace, tourist destination, zip‑line, heritage hotel [citation:5].</li></ul>
-    </div>
-    <div class="stop-point" style="border-left-color:#e67e22;">
-      <span class="real-marker"><i class="fas fa-map-pin"></i> <strong>Behror</strong></span>
-      <ul><li>Highway King restaurant cluster, popular dhaba stop [citation:5].</li></ul>
-    </div>
-    <div class="stop-point" style="border-left-color:#e67e22;">
-      <span class="real-marker"><i class="fas fa-map-pin"></i> <strong>Kotputli</strong></span>
-      <ul><li>Rural town, junction with NH 148B; solar panel integration zone.</li></ul>
-    </div>
-    <div class="stop-point" style="border-left-color:#e67e22;">
-      <span class="real-marker"><i class="fas fa-map-pin"></i> <strong>Shahpura</strong></span>
-      <ul><li>Shahpura Haveli, cultural stop, traditional Rajasthani architecture [citation:5].</li></ul>
-    </div>
-    <div class="stop-point" style="border-left-color:#e67e22;">
-      <span class="real-marker"><i class="fas fa-map-pin"></i> <strong>Manoharpur / Chandwaji</strong></span>
-      <ul><li>NH 48 junction, near Jaipur; greenfield super expressway end point (NH-352B) [citation:1].</li></ul>
-    </div>
-    <div class="stop-point" style="border-left-color:#b91c1c;">
-      <span class="real-marker"><i class="fas fa-flag-checkered"></i> <strong>Jaipur terminal (JECC / Ajmer Road)</strong></span>
-      <ul><li>BRTS to Sindhi Camp (12 min), Jaipur metro phase‑2, 15 min to city center.</li></ul>
-    </div>
-  </div>
 
-  <!-- ========== HYPERLOOP REALITY: IIT MADRAS TEST TRACK ========== -->
-  <h2>⚡ INDIA'S REAL HYPERLOOP PROGRESS (IIT MADRAS, 2025)</h2>
-  <div style="background: #d9ecff; border-radius: 2rem; padding: 1.5rem;">
-    <p><i class="fas fa-flask"></i> <strong>422-metre test track</strong> operational at IIT Madras campus, funded by Ministry of Railways (₹8.7 Cr grants). Union Minister Ashwini Vaishnaw confirmed: "First commercial project covering 40–50 km soon." [citation:2][citation:8]</p>
-    <p><i class="fas fa-rocket"></i> Target speed: Mach 1.0 (~1225 km/h). Delhi–Jaipur (280 km) in < 30 minutes. [citation:4][citation:6]</p>
-  </div>
+    <!-- Navigation -->
+    <nav id="nav">
+        <div class="logo">VAAYU</div>
+        <div class="nav-links">
+            <a href="#home">HOME</a>
+            <a href="#dimension1">DIMENSION 1</a>
+            <a href="#dimension2">DIMENSION 2</a>
+            <a href="#dimension3">DIMENSION 3</a>
+            <a href="#dimension4">DIMENSION 4</a>
+            <a href="#comparison">COMPARISON</a>
+        </div>
+    </nav>
 
-  <!-- ========== BROWNFIELD JUSTIFICATION WITH REAL LAND DATA ========== -->
-  <h2>📐 BROWNFIELD INTEGRATION – NH-48 REAL STATS</h2>
-  <table>
-    <tr><th>Parameter</th><th>Value (actual project data)</th></tr>
-    <tr><td>Existing NH-48 length Delhi–Jaipur</td><td>242 km (but total corridor 280 km with access roads) [citation:1]</td></tr>
-    <tr><td>Right of way available</td><td>60–90m (highway) + additional 8‑12m for Hyperloop pylons</td></tr>
-    <tr><td>Industrial townships along route</td><td>9 (Manesar, Bawal, Bhiwadi, Neemrana, Behror, Kotputli, Shahpura, etc.) [citation:1]</td></tr>
-    <tr><td>Land saved vs greenfield</td><td>~1,500 hectares (based on NH-48 widening experience) [citation:7]</td></tr>
-  </table>
+    <!-- Hero Section -->
+    <section id="home" class="hero">
+        <div id="canvas-3d"></div>
+        <div class="hero-content">
+            <div class="hero-subtitle">INDIA'S FIRST HYPERLOOP</div>
+            <h1 class="hero-title">DELHI TO<br><span>JAIPUR</span></h1>
+            <p class="hero-description">18 minutes. Zero emissions. 1000 km/h. The future of Indian transit, engineered today.</p>
+            <div class="hero-stats">
+                <div class="stat-item">
+                    <div class="stat-number" id="hero-speed">1000</div>
+                    <div class="stat-label">KM/H</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-number" id="hero-time">18</div>
+                    <div class="stat-label">MINUTES</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-number">0</div>
+                    <div class="stat-label">EMISSIONS</div>
+                </div>
+            </div>
+        </div>
+        <div class="scroll-indicator">
+            <span>SCROLL TO EXPLORE</span>
+            <div class="scroll-line"></div>
+        </div>
+    </section>
 
-  <!-- ========== VIBRATION & TURNING RADIUS – REAL ENGINEERING ========== -->
-  <h2>🔧 VIBRATION / RADIUS – REAL SOLUTIONS</h2>
-  <div class="grid-2">
-    <div class="card">
-      <h4>🔄 Turning radius optimisation</h4>
-      <p>NH-48 has curves of 2–4 km radius near Gurugram & Behror. Hyperloop requires >8 km @ 1000 km/h. Our solution: micro‑greenfield deviations (total 24 km) plus superelevation (6°) within pylons. Achieved radius >9.1 km on 98% of route. [citation:5]</p>
+    <!-- Dimension Navigation -->
+    <div class="dimension-nav">
+        <div class="dimension-container">
+            <a class="dimension-tab active" data-dimension="1">DIMENSION 1<br><small>ENGINEERING</small></a>
+            <a class="dimension-tab" data-dimension="2">DIMENSION 2<br><small>CIVIL STRATEGY</small></a>
+            <a class="dimension-tab" data-dimension="3">DIMENSION 3<br><small>ECONOMICS</small></a>
+            <a class="dimension-tab" data-dimension="4">DIMENSION 4<br><small>PASSENGER EXPERIENCE</small></a>
+        </div>
     </div>
-    <div class="card">
-      <h4>📳 Vibration damping</h4>
-      <p>Lead‑rubber bearings + 12m high pylons → ground vibration <0.2 mm/s. NH-48 traffic unaffected. Based on IIT Madras hyperloop test track data. [citation:2]</p>
-    </div>
-  </div>
 
-  <!-- ========== ENVIRONMENT & WILDLIFE – REAL ZONES ========== -->
-  <h2>🦌 AVOIDING ARAVALLI SENSITIVE ZONES</h2>
-  <p>Alignment carefully skirts Aravalli foothills; wildlife underpasses near Kotputli–Shahpura (phase 4). No forest land acquisition – proven by NH-48 alignment which already cleared environmental nods. [citation:7]</p>
+    <!-- Dimension 1: Engineering Blueprint -->
+    <section id="dimension1" class="dimension-section" data-dimension="1">
+        <div class="dimension-bg" id="dimension1-bg"></div>
+        <div class="dimension-content">
+            <div class="dimension-header">
+                <div class="dimension-number">DIMENSION 01</div>
+                <h2 class="dimension-title">ENGINEERING BLUEPRINT</h2>
+            </div>
 
-  <!-- ========== ECONOMIC COMPARISON (REAL COST SAVING) ========== -->
-  <h2>💰 COST COMPARISON – BROWNFIELD VS GREENFIELD (with ₹ figures)</h2>
-  <table>
-    <tr><th>Item</th><th>Greenfield (estimated)</th><th>Semi‑brownfield (NH-48)</th></tr>
-    <tr><td>Land acquisition (₹ Cr)</td><td>14,560</td><td>2,800</td></tr>
-    <tr><td>Resettlement & rehab (₹ Cr)</td><td>5,000 [citation:7]</td><td><200</td></tr>
-    <tr><td>Environment budget (₹ Cr)</td><td>450</td><td>50 (using existing footprint)</td></tr>
-    <tr><td>Construction time</td><td>8‑10 years</td><td>5‑6 years</td></tr>
-  </table>
+            <!-- Live Dashboard -->
+            <div class="live-dashboard">
+                <div class="dashboard-title">
+                    <span>LIVE TELEMETRY</span>
+                    <span class="live-badge">LIVE</span>
+                </div>
+                <div class="dashboard-grid">
+                    <div class="dashboard-item">
+                        <div class="dashboard-label">Tube Pressure</div>
+                        <div class="dashboard-number" id="live-pressure">98<span class="dashboard-unit">Pa</span></div>
+                        <div class="dashboard-progress">
+                            <div class="dashboard-progress-bar" id="pressure-bar" style="width: 9.8%"></div>
+                        </div>
+                    </div>
+                    <div class="dashboard-item">
+                        <div class="dashboard-label">Pod Speed</div>
+                        <div class="dashboard-number" id="live-speed">985<span class="dashboard-unit">km/h</span></div>
+                        <div class="dashboard-progress">
+                            <div class="dashboard-progress-bar" id="speed-bar" style="width: 98.5%"></div>
+                        </div>
+                    </div>
+                    <div class="dashboard-item">
+                        <div class="dashboard-label">Solar Generation</div>
+                        <div class="dashboard-number" id="live-solar">82<span class="dashboard-unit">MW</span></div>
+                        <div class="dashboard-progress">
+                            <div class="dashboard-progress-bar" id="solar-bar" style="width: 82%"></div>
+                        </div>
+                    </div>
+                    <div class="dashboard-item">
+                        <div class="dashboard-label">Passengers Today</div>
+                        <div class="dashboard-number" id="live-passengers">42,850</div>
+                        <div class="dashboard-progress">
+                            <div class="dashboard-progress-bar" id="passengers-bar" style="width: 80%"></div>
+                        </div>
+                    </div>
+                    <div class="dashboard-item">
+                        <div class="dashboard-label">CO₂ Saved</div>
+                        <div class="dashboard-number" id="live-co2">128<span class="dashboard-unit">tons</span></div>
+                        <div class="dashboard-progress">
+                            <div class="dashboard-progress-bar" id="co2-bar" style="width: 100%"></div>
+                        </div>
+                    </div>
+                    <div class="dashboard-item">
+                        <div class="dashboard-label">Regen Recovery</div>
+                        <div class="dashboard-number" id="live-regen">24<span class="dashboard-unit">%</span></div>
+                        <div class="dashboard-progress">
+                            <div class="dashboard-progress-bar" id="regen-bar" style="width: 24%"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
 
-  <!-- ========== LAST MILE DETAILS (REAL MODES) ========== -->
-  <h2>🚌 LAST MILE – REAL CONNECTIVITY OPTIONS</h2>
-  <div class="grid-2">
-    <div>
-      <h4>Delhi terminal (Dwarka)</h4>
-      <ul>
-        <li>Delhi Airport Metro Express (5 min frequency)</li>
-        <li>EV shuttles to IGI T3 (7 min)</li>
-        <li>Park & ride 5000 slots</li>
-      </ul>
-    </div>
-    <div>
-      <h4>Jaipur terminal (JECC)</h4>
-      <ul>
-        <li>BRTS corridor to Sindhi Camp (12 min)</li>
-        <li>Jaipur metro phase‑2 (approved)</li>
-        <li>EV cab / auto stand</li>
-      </ul>
-    </div>
-  </div>
+            <div class="dimension-grid">
+                <div class="dimension-card">
+                    <div class="card-icon"><i class="fas fa-wind"></i></div>
+                    <div class="card-title">Tube Environment</div>
+                    <div class="card-value">100 Pa</div>
+                    <div class="card-desc">Hybrid low-pressure system (0.1% atmospheric pressure)</div>
+                    <ul class="card-list">
+                        <li>90% drag reduction vs atmospheric</li>
+                        <li>Industrial vacuum pumps (not hard vacuum)</li>
+                        <li>Active Kantrowitz management with nose compressors</li>
+                        <li>Blockage ratio β = 0.14 (target <0.4)</li>
+                    </ul>
+                </div>
 
-  <!-- ========== TIME COMPARISON (REAL) ========== -->
-  <h2>⏱️ DOOR-TO-DOOR TIME (realistic)</h2>
-  <table>
-    <tr><th>Mode</th><th>Time</th></tr>
-    <tr><td>Current car (NH-48)</td><td>5‑6 hours [citation:5]</td></tr>
-    <tr><td>Bus</td><td>6‑7 hours</td></tr>
-    <tr><td>Flight (incl. airport transfers)</td><td>3.5‑4.5 hours</td></tr>
-    <tr><td class="highlight">Hyperloop (this proposal)</td><td class="highlight">70‑80 min door‑to‑door</td></tr>
-  </table>
+                <div class="dimension-card">
+                    <div class="card-icon"><i class="fas fa-magnet"></i></div>
+                    <div class="card-title">Levitation System</div>
+                    <div class="card-value">Passive Maglev</div>
+                    <div class="card-desc">Inductrack with Halbach permanent magnet arrays</div>
+                    <ul class="card-list">
+                        <li>No power required to float - fail-safe</li>
+                        <li>Self-stabilizing at high speed</li>
+                        <li>Zero active electronic stabilization</li>
+                        <li>Retractable wheels for <50 km/h</li>
+                    </ul>
+                </div>
 
-  <!-- ========== IIT MADRAS / RAILWAY QUOTE ========== -->
-  <div style="background: #002856; color: white; border-radius: 2.5rem; padding: 2rem; margin: 2rem 0;">
-    <i class="fas fa-quote-left" style="font-size: 3rem; opacity: 0.5;"></i>
-    <p style="font-size:1.6rem; font-weight:500;">"Government-academia collaboration is driving innovation in futuristic transportation. The hyperloop project at IIT Madras will go a long way in developing technologies." – Ashwini Vaishnaw, Railway Minister, Feb 2025 [citation:2][citation:8]</p>
-  </div>
+                <div class="dimension-card">
+                    <div class="card-icon"><i class="fas fa-bolt"></i></div>
+                    <div class="card-title">Propulsion</div>
+                    <div class="card-value">96% Efficiency</div>
+                    <div class="card-desc">Linear Synchronous Motor (LSM)</div>
+                    <ul class="card-list">
+                        <li>No slip losses like LIM</li>
+                        <li>Precise speed control at 1000 km/h</li>
+                        <li>Track-based stator reduces pod weight</li>
+                        <li>Peak power: 4-6 MW per pod</li>
+                    </ul>
+                </div>
 
-  <!-- ========== FINAL CONCLUSION (EXACT DIMENSION 2 CLOSING) ========== -->
-  <div class="footer-box">
-    <span style="font-size:3rem; margin-right:1rem;">🛣️</span> SUSTAINABLE, ECONOMICALLY VIABLE, AND HYPERLOOP-COMPATIBLE CIVIL MODEL – DELHI–JAIPUR NH-48 <span style="font-size:3rem; margin-left:1rem;">⚡</span>
-    <p style="font-size:1.3rem; margin-top:1rem;">✔ Real stopping points · 9 industrial nodes · IIT Madras test track validated · 30 min travel · 2026 feasibility</p>
-  </div>
+                <div class="dimension-card">
+                    <div class="card-icon"><i class="fas fa-solar-panel"></i></div>
+                    <div class="card-title">Energy Sourcing</div>
+                    <div class="card-value">405 MW Peak</div>
+                    <div class="card-desc">Solar cladding across 270 km tube</div>
+                    <ul class="card-list">
+                        <li>Thin-film PV on tube exterior (4m diameter)</li>
+                        <li>Effective average: 80-100 MW (22% CF)</li>
+                        <li>BESS nodes every 50 km for load balancing</li>
+                        <li>Regenerative braking: 20-30% recovery</li>
+                    </ul>
+                </div>
+            </div>
 
-  <!-- tiny footer note -->
-  <div style="margin-top: 1.5rem; text-align: right; opacity:0.7;">
-    <i>VELOCITAS · dimension 2 · real route data sources: NH-48 wiki, Tripoto, IITM hyperloop announcements · 2500+ lines</i>
-  </div>
-</div>
+            <!-- Formula Sheet -->
+            <div style="margin-top: 60px; background: rgba(0,0,0,0.3); border-radius: 20px; padding: 40px;">
+                <h3 style="color: #00ff9d; margin-bottom: 30px;">KEY FORMULAS</h3>
+                <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 30px;">
+                    <div>
+                        <p style="color: #fff; font-family: monospace; font-size: 18px;">F<sub>d</sub> = ½ρC<sub>d</sub>Av²</p>
+                        <p style="color: #8892b0;">Aerodynamic Drag</p>
+                    </div>
+                    <div>
+                        <p style="color: #fff; font-family: monospace; font-size: 18px;">β = A<sub>pod</sub>/A<sub>tube</sub> < 0.4</p>
+                        <p style="color: #8892b0;">Kantrowitz Condition</p>
+                    </div>
+                    <div>
+                        <p style="color: #fff; font-family: monospace; font-size: 18px;">P<sub>solar</sub> = η<sub>pv</sub> × A × G</p>
+                        <p style="color: #8892b0;">Solar Generation</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Dimension 2: Civil Strategy -->
+    <section id="dimension2" class="dimension-section" data-dimension="2" style="background: #020912;">
+        <div class="dimension-content">
+            <div class="dimension-header">
+                <div class="dimension-number">DIMENSION 02</div>
+                <h2 class="dimension-title">CIVIL STRATEGY & ROUTE</h2>
+            </div>
+
+            <div class="route-container">
+                <div id="route-canvas">
+                    <canvas id="map-canvas" width="800" height="500" style="width:100%; height:100%;"></canvas>
+                </div>
+                <div class="station-panel">
+                    <h3 style="margin-bottom: 30px;">STATIONS</h3>
+                    <div class="station-item" data-station="delhi">
+                        <div class="station-marker"></div>
+                        <div class="station-info">
+                            <div class="station-name">Delhi Terminal</div>
+                            <div class="station-distance">Metro Integration</div>
+                        </div>
+                        <div class="station-time">0 min</div>
+                    </div>
+                    <div class="station-item" data-station="gurugram">
+                        <div class="station-marker"></div>
+                        <div class="station-info">
+                            <div class="station-name">Gurugram</div>
+                            <div class="station-distance">Corporate Hub</div>
+                        </div>
+                        <div class="station-time">4 min</div>
+                    </div>
+                    <div class="station-item" data-station="manesar">
+                        <div class="station-marker"></div>
+                        <div class="station-info">
+                            <div class="station-name">Manesar/Bhiwadi</div>
+                            <div class="station-distance">Industrial Node</div>
+                        </div>
+                        <div class="station-time">8 min</div>
+                    </div>
+                    <div class="station-item" data-station="behror">
+                        <div class="station-marker"></div>
+                        <div class="station-info">
+                            <div class="station-name">Behror</div>
+                            <div class="station-distance">Midway Emergency Bay</div>
+                        </div>
+                        <div class="station-time">12 min</div>
+                    </div>
+                    <div class="station-item" data-station="jaipur">
+                        <div class="station-marker"></div>
+                        <div class="station-info">
+                            <div class="station-name">Jaipur Terminal</div>
+                            <div class="station-distance">Tourism Gateway</div>
+                        </div>
+                        <div class="station-time">18 min</div>
+                    </div>
+
+                    <div style="margin-top: 40px; padding-top: 20px; border-top: 1px solid rgba(255,255,255,0.1);">
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 15px;">
+                            <span style="color: #8892b0;">Total Distance:</span>
+                            <span style="color: #00ff9d; font-weight: 600;">270 km</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 15px;">
+                            <span style="color: #8892b0;">Min Curve Radius:</span>
+                            <span style="color: #00ff9d; font-weight: 600;">78.7 km</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between;">
+                            <span style="color: #8892b0;">Alignment:</span>
+                            <span style="color: #fff;">Semi-brownfield (NH-48)</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="dimension-grid" style="margin-top: 60px;">
+                <div class="dimension-card">
+                    <div class="card-icon"><i class="fas fa-road"></i></div>
+                    <div class="card-title">Brownfield Integration</div>
+                    <div class="card-desc">Parallel to NH-48 with 8-12m additional land</div>
+                    <ul class="card-list">
+                        <li>Avoids Aravalli environmental zones</li>
+                        <li>Reduces land acquisition by 70%</li>
+                        <li>Elevated pylons (10-15m) with damping bearings</li>
+                        <li>Micro-deviations for curve smoothing</li>
+                    </ul>
+                </div>
+
+                <div class="dimension-card">
+                    <div class="card-icon"><i class="fas fa-train"></i></div>
+                    <div class="card-title">Last Mile Connectivity</div>
+                    <div class="card-desc">Integrated with existing transit</div>
+                    <ul class="card-list">
+                        <li>Delhi: Metro integration at Rao Tularam</li>
+                        <li>Electric feeder buses and EV taxis</li>
+                        <li>Jaipur: Shuttle to city center (15 min)</li>
+                        <li>Unified ticketing system</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Dimension 3: Economics -->
+    <section id="dimension3" class="dimension-section" data-dimension="3" style="background: #031013;">
+        <div class="dimension-content">
+            <div class="dimension-header">
+                <div class="dimension-number">DIMENSION 03</div>
+                <h2 class="dimension-title">ECONOMIC REALITY</h2>
+            </div>
+
+            <div class="dimension-grid">
+                <div class="dimension-card">
+                    <div class="card-icon"><i class="fas fa-chart-line"></i></div>
+                    <div class="card-title">CAPEX</div>
+                    <div class="card-value">₹78,250 Cr</div>
+                    <div class="card-desc">Total capital investment for 270km corridor</div>
+                    <ul class="card-list">
+                        <li>Tube infrastructure: ₹64,400 Cr (82%)</li>
+                        <li>Stations: ₹3,500 Cr (4%)</li>
+                        <li>Pods & rolling stock: ₹1,350 Cr (2%)</li>
+                        <li>Contingency: ₹7,000 Cr (9%)</li>
+                        <li>Cost per km: ₹290 Cr/km</li>
+                    </ul>
+                </div>
+
+                <div class="dimension-card">
+                    <div class="card-icon"><i class="fas fa-coins"></i></div>
+                    <div class="card-title">OPEX & Revenue</div>
+                    <div class="card-value">₹4,550 Cr/yr</div>
+                    <div class="card-desc">Annual operating expenditure</div>
+                    <ul class="card-list">
+                        <li>Energy: ₹1,650 Cr (36%)</li>
+                        <li>Maintenance: ₹1,200 Cr (26%)</li>
+                        <li>Staff: ₹750 Cr (16%)</li>
+                        <li>Revenue (growth): ₹4,960 Cr/yr</li>
+                        <li>Annual surplus: ₹410 Cr</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Interactive Graph -->
+            <div class="graph-container" style="margin-top: 60px;">
+                <canvas id="graph-canvas" width="1000" height="400"></canvas>
+                <div class="graph-tooltip" id="graph-tooltip"></div>
+            </div>
+
+            <div style="margin-top: 40px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 30px;">
+                <div style="text-align: center;">
+                    <div style="font-size: 48px; color: #00ff9d;">₹2,500</div>
+                    <div style="color: #8892b0;">Ticket Price</div>
+                </div>
+                <div style="text-align: center;">
+                    <div style="font-size: 48px; color: #00ff9d;">55-70k</div>
+                    <div style="color: #8892b0;">Daily Passengers</div>
+                </div>
+                <div style="text-align: center;">
+                    <div style="font-size: 48px; color: #00ff9d;">18-22 yrs</div>
+                    <div style="color: #8892b0;">Break-even Period</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Dimension 4: Passenger Experience -->
+    <section id="dimension4" class="dimension-section" data-dimension="4" style="background: #040815;">
+        <div class="dimension-content">
+            <div class="dimension-header">
+                <div class="dimension-number">DIMENSION 04</div>
+                <h2 class="dimension-title">PASSENGER EXPERIENCE</h2>
+            </div>
+
+            <!-- 3D Pod Viewer -->
+            <div class="pod-viewer">
+                <canvas id="pod-canvas" width="800" height="400"></canvas>
+                <div class="pod-controls">
+                    <div class="pod-control-btn" id="rotate-left"><i class="fas fa-undo-alt"></i></div>
+                    <div class="pod-control-btn" id="rotate-right"><i class="fas fa-redo-alt"></i></div>
+                    <div class="pod-control-btn" id="zoom-in"><i class="fas fa-search-plus"></i></div>
+                    <div class="pod-control-btn" id="zoom-out"><i class="fas fa-search-minus"></i></div>
+                </div>
+            </div>
+
+            <div class="dimension-grid" style="margin-top: 60px;">
+                <div class="dimension-card">
+                    <div class="card-icon"><i class="fas fa-chair"></i></div>
+                    <div class="card-title">6-DOF Smart Seats</div>
+                    <div class="card-desc">Active G-Leveling system</div>
+                    <ul class="card-list">
+                        <li>Jerk < 0.3 m/s³</li>
+                        <li>Lateral G-force < 0.1g</li>
+                        <li>Resultant force perpendicular to spine</li>
+                        <li>Airline-level comfort at 1000 km/h</li>
+                    </ul>
+                </div>
+
+                <div class="dimension-card">
+                    <div class="card-icon"><i class="fas fa-temperature-low"></i></div>
+                    <div class="card-title">PCM Cooling</div>
+                    <div class="card-value">22°C</div>
+                    <div class="card-desc">Phase Change Material thermal management</div>
+                    <ul class="card-list">
+                        <li>No active power draw during travel</li>
+                        <li>Absorbs 3,300W heat load</li>
+                        <li>Silent operation, zero moving parts</li>
+                        <li>Re-solidifies at stations</li>
+                    </ul>
+                </div>
+
+                <div class="dimension-card">
+                    <div class="card-icon"><i class="fas fa-volume-mute"></i></div>
+                    <div class="card-title">Acoustic Engineering</div>
+                    <div class="card-value"><60 dB</div>
+                    <div class="card-desc">Library-level quiet</div>
+                    <ul class="card-list">
+                        <li>Blockage ratio β = 0.14</li>
+                        <li>No pressure shock waves</li>
+                        <li>Streamlined nose design</li>
+                        <li>Bypass compressors</li>
+                    </ul>
+                </div>
+
+                <div class="dimension-card">
+                    <div class="card-icon"><i class="fas fa-shield-alt"></i></div>
+                    <div class="card-title">Emergency Safety</div>
+                    <div class="card-value"><180 sec</div>
+                    <div class="card-desc">Total evacuation time</div>
+                    <ul class="card-list">
+                        <li>Sectional airlocks every 10-15 km</li>
+                        <li>Rapid repressurization system</li>
+                        <li>Zero-trust cybersecurity</li>
+                        <li>Fire-resistant materials (FAR 25.853)</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Comparison Matrix Section -->
+    <section id="comparison" class="dimension-section" style="background: #00020a;">
+        <div class="dimension-content">
+            <div class="dimension-header">
+                <div class="dimension-number">FINAL VERDICT</div>
+                <h2 class="dimension-title">HYPERLOOP VS FLIGHT</h2>
+            </div>
+
+            <div class="comparison-matrix">
+                <div class="matrix-header">METRIC</div>
+                <div class="matrix-header">HYPERLOOP</div>
+                <div class="matrix-header">COMMERCIAL FLIGHT</div>
+
+                <!-- Row 1 -->
+                <div class="matrix-cell">Door-to-Door Time</div>
+                <div class="matrix-cell">25 min <span class="winner-badge">WINNER</span></div>
+                <div class="matrix-cell">3.5 hours</div>
+
+                <!-- Row 2 -->
+                <div class="matrix-cell">Energy per pkm</div>
+                <div class="matrix-cell">50 Wh <span class="winner-badge">WINNER</span></div>
+                <div class="matrix-cell">150 Wh</div>
+
+                <!-- Row 3 -->
+                <div class="matrix-cell">Ticket Price</div>
+                <div class="matrix-cell">₹2,500 <span class="winner-badge">WINNER</span></div>
+                <div class="matrix-cell">₹4,000</div>
+
+                <!-- Row 4 -->
+                <div class="matrix-cell">Carbon Emissions</div>
+                <div class="matrix-cell">0 kg <span class="winner-badge">WINNER</span></div>
+                <div class="matrix-cell">50 kg</div>
+
+                <!-- Row 5 -->
+                <div class="matrix-cell">Frequency</div>
+                <div class="matrix-cell">Every 5 min</div>
+                <div class="matrix-cell">Hourly</div>
+
+                <!-- Row 6 -->
+                <div class="matrix-cell">Weather Dependent</div>
+                <div class="matrix-cell">No <span class="winner-badge">WINNER</span></div>
+                <div class="matrix-cell">Yes</div>
+
+                <!-- Row 7 -->
+                <div class="matrix-cell">Check-in Time</div>
+                <div class="matrix-cell">10 min</div>
+                <div class="matrix-cell">90 min</div>
+            </div>
+
+            <div style="text-align: center; margin-top: 60px;">
+                <div style="display: inline-block; padding: 20px 40px; background: rgba(0,255,157,0.1); border-radius: 60px; border: 1px solid #00ff9d;">
+                    <span style="color: #00ff9d; font-weight: 600;">EFFICIENCY TRIANGLE: </span>
+                    <span style="color: #fff;">TIME ✓ ENERGY ✓ COST ✓</span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer>
+        <div class="footer-grid">
+            <div>
+                <div class="footer-logo">VAAYU</div>
+                <p class="footer-text">India's first Hyperloop corridor between Delhi and Jaipur. 18 minutes. Zero emissions. Future ready.</p>
+            </div>
+            <div class="footer-links">
+                <h4>Dimensions</h4>
+                <a href="#dimension1">Engineering</a>
+                <a href="#dimension2">Civil Strategy</a>
+                <a href="#dimension3">Economics</a>
+                <a href="#dimension4">Experience</a>
+            </div>
+            <div class="footer-links">
+                <h4>Resources</h4>
+                <a href="#" id="download-report">Full Report (PDF)</a>
+                <a href="#">Technical Specs</a>
+                <a href="#">Route Map</a>
+                <a href="#">Team</a>
+            </div>
+            <div class="footer-links">
+                <h4>Contact</h4>
+                <a href="#">IIT Delhi</a>
+                <a href="#">Green Velocity Challenge</a>
+                <a href="#">The Garuds</a>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>© 2026 Project VAAYU | The Garuds | All rights reserved</p>
+            <p style="margin-top: 10px; font-size: 12px;">• Green Velocity Challenge • Infinity Hyperloop & Energy Society IITD</p>
+        </div>
+    </footer>
+
+    <script>
+        // ==================== GSAP ANIMATIONS ====================
+        gsap.registerPlugin(ScrollTrigger, MotionPathPlugin);
+
+        // Loader
+        window.addEventListener('load', () => {
+            setTimeout(() => {
+                document.getElementById('loader').classList.add('hidden');
+            }, 2000);
+        });
+
+        // Hero Animations
+        gsap.to('.hero-subtitle', {
+            opacity: 1,
+            y: 0,
+            duration: 1,
+            delay: 2.2
+        });
+
+        gsap.to('.hero-title', {
+            opacity: 1,
+            y: 0,
+            duration: 1,
+            delay: 2.4
+        });
+
+        gsap.to('.hero-description', {
+            opacity: 1,
+            y: 0,
+            duration: 1,
+            delay: 2.6
+        });
+
+        gsap.to('.hero-stats', {
+            opacity: 1,
+            y: 0,
+            duration: 1,
+            delay: 2.8
+        });
+
+        // Scroll animations for dimension cards
+        gsap.utils.toArray('.dimension-card').forEach((card, i) => {
+            gsap.from(card, {
+                scrollTrigger: {
+                    trigger: card,
+                    start: 'top 80%',
+                    toggleActions: 'play none none reverse'
+                },
+                opacity: 0,
+                y: 50,
+                duration: 0.8,
+                delay: i * 0.1
+            });
+        });
+
+        // Dimension navigation active state
+        const sections = document.querySelectorAll('.dimension-section');
+        const navTabs = document.querySelectorAll('.dimension-tab');
+
+        window.addEventListener('scroll', () => {
+            let current = '';
+            sections.forEach(section => {
+                const sectionTop = section.offsetTop - 200;
+                const sectionHeight = section.clientHeight;
+                if (pageYOffset >= sectionTop) {
+                    current = section.getAttribute('data-dimension');
+                }
+            });
+
+            navTabs.forEach(tab => {
+                tab.classList.remove('active');
+                if (tab.getAttribute('data-dimension') === current) {
+                    tab.classList.add('active');
+                }
+            });
+        });
+
+        navTabs.forEach(tab => {
+            tab.addEventListener('click', () => {
+                const dim = tab.getAttribute('data-dimension');
+                const targetSection = document.querySelector(`[data-dimension="${dim}"]`);
+                targetSection.scrollIntoView({ behavior: 'smooth' });
+            });
+        });
+
+        // ==================== THREE.JS 3D BACKGROUND ====================
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        const renderer = new THREE.WebGLRenderer({ canvas: document.getElementById('canvas-3d'), alpha: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(window.devicePixelRatio);
+
+        // Create tube
+        const tubeGeometry = new THREE.TorusKnotGeometry(3, 0.8, 100, 16);
+        const tubeMaterial = new THREE.MeshBasicMaterial({ color: 0x00ff9d, wireframe: true, transparent: true, opacity: 0.2 });
+        const tube = new THREE.Mesh(tubeGeometry, tubeMaterial);
+        scene.add(tube);
+
+        // Create particles
+        const particlesGeometry = new THREE.BufferGeometry();
+        const particlesCount = 2000;
+        const posArray = new Float32Array(particlesCount * 3);
+
+        for(let i = 0; i < particlesCount * 3; i += 3) {
+            posArray[i] = (Math.random() - 0.5) * 50;
+            posArray[i+1] = (Math.random() - 0.5) * 50;
+            posArray[i+2] = (Math.random() - 0.5) * 50;
+        }
+
+        particlesGeometry.setAttribute('position', new THREE.BufferAttribute(posArray, 3));
+        const particlesMaterial = new THREE.PointsMaterial({ size: 0.05, color: 0x00ff9d, transparent: true, opacity: 0.5 });
+        const particles = new THREE.Points(particlesGeometry, particlesMaterial);
+        scene.add(particles);
+
+        camera.position.z = 15;
+
+        // Animation
+        function animate3D() {
+            requestAnimationFrame(animate3D);
+
+            tube.rotation.x += 0.001;
+            tube.rotation.y += 0.002;
+            particles.rotation.y += 0.0005;
+
+            renderer.render(scene, camera);
+        }
+
+        animate3D();
+
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+
+        // ==================== LIVE DASHBOARD UPDATES ====================
+        function updateDashboard() {
+            // Simulate real-time fluctuations
+            const pressure = 95 + Math.random() * 10;
+            const speed = 980 + Math.random() * 20;
+            const solar = 80 + Math.random() * 10;
+            const passengers = 42000 + Math.floor(Math.random() * 2000);
+            const co2 = 120 + Math.random() * 15;
+            const regen = 22 + Math.random() * 5;
+
+            // Update DOM
+            document.getElementById('live-pressure').innerHTML = pressure.toFixed(0) + '<span class="dashboard-unit">Pa</span>';
+            document.getElementById('live-speed').innerHTML = speed.toFixed(0) + '<span class="dashboard-unit">km/h</span>';
+            document.getElementById('live-solar').innerHTML = solar.toFixed(0) + '<span class="dashboard-unit">MW</span>';
+            document.getElementById('live-passengers').innerHTML = passengers.toLocaleString();
+            document.getElementById('live-co2').innerHTML = co2.toFixed(0) + '<span class="dashboard-unit">tons</span>';
+            document.getElementById('live-regen').innerHTML = regen.toFixed(0) + '<span class="dashboard-unit">%</span>';
+
+            // Update progress bars
+            document.getElementById('pressure-bar').style.width = (pressure / 1000 * 100) + '%';
+            document.getElementById('speed-bar').style.width = (speed / 1000 * 100) + '%';
+            document.getElementById('solar-bar').style.width = (solar / 100 * 100) + '%';
+            document.getElementById('passengers-bar').style.width = (passengers / 70000 * 100) + '%';
+            document.getElementById('co2-bar').style.width = '100%';
+            document.getElementById('regen-bar').style.width = regen + '%';
+
+            // Update hero stats
+            document.getElementById('hero-speed').innerHTML = speed.toFixed(0);
+            document.getElementById('hero-time').innerHTML = (270 / speed * 60).toFixed(0);
+        }
+
+        setInterval(updateDashboard, 2000);
+        updateDashboard();
+
+        // ==================== INTERACTIVE MAP ====================
+        const mapCanvas = document.getElementById('map-canvas');
+        const mapCtx = mapCanvas.getContext('2d');
+
+        function drawMap() {
+            mapCanvas.width = mapCanvas.clientWidth;
+            mapCanvas.height = mapCanvas.clientHeight;
+
+            const width = mapCanvas.width;
+            const height = mapCanvas.height;
+
+            // Clear
+            mapCtx.fillStyle = '#0a0f1a';
+            mapCtx.fillRect(0, 0, width, height);
+
+            // Draw grid
+            mapCtx.strokeStyle = '#1a2a3a';
+            mapCtx.lineWidth = 1;
+            for(let i = 0; i < width; i += 50) {
+                mapCtx.beginPath();
+                mapCtx.moveTo(i, 0);
+                mapCtx.lineTo(i, height);
+                mapCtx.strokeStyle = '#1a2a3a';
+                mapCtx.stroke();
+            }
+            for(let i = 0; i < height; i += 50) {
+                mapCtx.beginPath();
+                mapCtx.moveTo(0, i);
+                mapCtx.lineTo(width, i);
+                mapCtx.stroke();
+            }
+
+            // Draw route
+            const points = [
+                {x: width * 0.1, y: height * 0.2}, // Delhi
+                {x: width * 0.25, y: height * 0.3}, // Gurugram
+                {x: width * 0.4, y: height * 0.4}, // Manesar
+                {x: width * 0.6, y: height * 0.6}, // Behror
+                {x: width * 0.85, y: height * 0.8} // Jaipur
+            ];
+
+            // Draw NH-48
+            mapCtx.beginPath();
+            mapCtx.strokeStyle = '#4a5568';
+            mapCtx.lineWidth = 3;
+            mapCtx.setLineDash([]);
+            mapCtx.moveTo(points[0].x, points[0].y);
+            for(let i = 1; i < points.length; i++) {
+                mapCtx.lineTo(points[i].x, points[i].y);
+            }
+            mapCtx.stroke();
+
+            // Draw Hyperloop
+            mapCtx.beginPath();
+            mapCtx.strokeStyle = '#00ff9d';
+            mapCtx.lineWidth = 4;
+            mapCtx.setLineDash([10, 10]);
+            mapCtx.moveTo(points[0].x, points[0].y - 15);
+            for(let i = 1; i < points.length; i++) {
+                mapCtx.lineTo(points[i].x, points[i].y - 15);
+            }
+            mapCtx.stroke();
+
+            // Draw stations
+            points.forEach((point, index) => {
+                // Glow effect
+                mapCtx.shadowColor = '#00ff9d';
+                mapCtx.shadowBlur = 15;
+                
+                mapCtx.beginPath();
+                mapCtx.fillStyle = '#00ff9d';
+                mapCtx.arc(point.x, point.y - 15, 8, 0, Math.PI * 2);
+                mapCtx.fill();
+
+                mapCtx.shadowBlur = 0;
+                mapCtx.beginPath();
+                mapCtx.fillStyle = '#fff';
+                mapCtx.arc(point.x, point.y - 15, 4, 0, Math.PI * 2);
+                mapCtx.fill();
+            });
+
+            // Draw moving pod
+            const time = Date.now() / 1000;
+            const podProgress = (time % 10) / 10; // 10 second loop
+
+            // Calculate pod position along path
+            let podX, podY;
+            if(podProgress < 0.25) {
+                const t = podProgress * 4;
+                podX = points[0].x + (points[1].x - points[0].x) * t;
+                podY = points[0].y + (points[1].y - points[0].y) * t - 15;
+            } else if(podProgress < 0.5) {
+                const t = (podProgress - 0.25) * 4;
+                podX = points[1].x + (points[2].x - points[1].x) * t;
+                podY = points[1].y + (points[2].y - points[1].y) * t - 15;
+            } else if(podProgress < 0.75) {
+                const t = (podProgress - 0.5) * 4;
+                podX = points[2].x + (points[3].x - points[2].x) * t;
+                podY = points[2].y + (points[3].y - points[2].y) * t - 15;
+            } else {
+                const t = (podProgress - 0.75) * 4;
+                podX = points[3].x + (points[4].x - points[3].x) * t;
+                podY = points[3].y + (points[4].y - points[3].y) * t - 15;
+            }
+
+            // Draw pod
+            mapCtx.shadowColor = '#00ff9d';
+            mapCtx.shadowBlur = 30;
+            mapCtx.beginPath();
+            mapCtx.fillStyle = '#00ff9d';
+            mapCtx.arc(podX, podY, 12, 0, Math.PI * 2);
+            mapCtx.fill();
+
+            // Draw trail
+            mapCtx.shadowBlur = 20;
+            mapCtx.beginPath();
+            mapCtx.fillStyle = 'rgba(0, 255, 157, 0.3)';
+            mapCtx.arc(podX - 20, podY, 6, 0, Math.PI * 2);
+            mapCtx.fill();
+
+            requestAnimationFrame(drawMap);
+        }
+
+        drawMap();
+
+        // ==================== ECONOMICS GRAPH ====================
+        const graphCanvas = document.getElementById('graph-canvas');
+        const graphCtx = graphCanvas.getContext('2d');
+        const tooltip = document.getElementById('graph-tooltip');
+
+        function drawGraph() {
+            graphCanvas.width = graphCanvas.clientWidth;
+            graphCanvas.height = graphCanvas.clientHeight;
+
+            const width = graphCanvas.width;
+            const height = graphCanvas.height;
+            const padding = 60;
+
+            // Clear
+            graphCtx.fillStyle = '#0a0f1a';
+            graphCtx.fillRect(0, 0, width, height);
+
+            // Draw axes
+            graphCtx.strokeStyle = '#1a2a3a';
+            graphCtx.lineWidth = 2;
+            graphCtx.beginPath();
+            graphCtx.moveTo(padding, padding);
+            graphCtx.lineTo(padding, height - padding);
+            graphCtx.lineTo(width - padding, height - padding);
+            graphCtx.stroke();
+
+            // Data: CAPEX recovery over years
+            const years = [0, 5, 10, 15, 20, 25];
+            const capex = 78250; // Crore
+            const revenue = [0, 15000, 35000, 58000, 82000, 110000];
+
+            // Draw bars
+            const barWidth = (width - 2 * padding) / years.length - 10;
+
+            years.forEach((year, i) => {
+                const x = padding + i * (barWidth + 20);
+                const barHeight = (revenue[i] / 120000) * (height - 2 * padding);
+                
+                // Gradient
+                const gradient = graphCtx.createLinearGradient(x, height - padding, x, height - padding - barHeight);
+                gradient.addColorStop(0, '#00ff9d');
+                gradient.addColorStop(1, '#00cc7a');
+                
+                graphCtx.fillStyle = gradient;
+                graphCtx.fillRect(x, height - padding - barHeight, barWidth, barHeight);
+
+                // Break-even line
+                if(i > 0 && revenue[i-1] < capex && revenue[i] >= capex) {
+                    graphCtx.strokeStyle = '#ff3366';
+                    graphCtx.lineWidth = 2;
+                    graphCtx.setLineDash([5, 5]);
+                    graphCtx.beginPath();
+                    graphCtx.moveTo(padding, height - padding - (capex / 120000) * (height - 2 * padding));
+                    graphCtx.lineTo(width - padding, height - padding - (capex / 120000) * (height - 2 * padding));
+                    graphCtx.stroke();
+                    graphCtx.setLineDash([]);
+                }
+
+                // Year label
+                graphCtx.fillStyle = '#8892b0';
+                graphCtx.font = '12px Arial';
+                graphCtx.fillText('Year ' + year, x, height - padding + 20);
+            });
+
+            // CAPEX line
+            graphCtx.strokeStyle = '#ff3366';
+            graphCtx.lineWidth = 2;
+            graphCtx.setLineDash([5, 5]);
+            graphCtx.beginPath();
+            graphCtx.moveTo(padding, height - padding - (capex / 120000) * (height - 2 * padding));
+            graphCtx.lineTo(width - padding, height - padding - (capex / 120000) * (height - 2 * padding));
+            graphCtx.stroke();
+            graphCtx.setLineDash([]);
+
+            // Label
+            graphCtx.fillStyle = '#ff3366';
+            graphCtx.font = 'bold 12px Arial';
+            graphCtx.fillText('CAPEX: ₹78,250 Cr', width - 200, height - padding - (capex / 120000) * (height - 2 * padding) - 10);
+        }
+
+        setInterval(drawGraph, 100);
+        drawGraph();
+
+        // ==================== 3D POD VIEWER (SIMPLE CANVAS) ====================
+        const podCanvas = document.getElementById('pod-canvas');
+        const podCtx = podCanvas.getContext('2d');
+        let podRotation = 0;
+
+        function drawPod() {
+            podCanvas.width = podCanvas.clientWidth;
+            podCanvas.height = podCanvas.clientHeight;
+
+            const width = podCanvas.width;
+            const height = podCanvas.height;
+            const centerX = width / 2;
+            const centerY = height / 2;
+
+            // Clear
+            podCtx.fillStyle = '#0a0f1a';
+            podCtx.fillRect(0, 0, width, height);
+
+            // Draw 3D pod (simplified)
+            podCtx.save();
+            podCtx.translate(centerX, centerY);
+            podCtx.rotate(podRotation);
+
+            // Body
+            podCtx.fillStyle = '#00ff9d';
+            podCtx.shadowColor = '#00ff9d';
+            podCtx.shadowBlur = 30;
+            podCtx.beginPath();
+            podCtx.ellipse(0, 0, 150, 40, 0, 0, Math.PI * 2);
+            podCtx.fill();
+
+            // Windows
+            podCtx.fillStyle = '#fff';
+            podCtx.shadowBlur = 10;
+            for(let i = -2; i <= 2; i++) {
+                podCtx.beginPath();
+                podCtx.arc(40 * i, -10, 10, 0, Math.PI * 2);
+                podCtx.fill();
+            }
+
+            // Nose
+            podCtx.fillStyle = '#00cc7a';
+            podCtx.beginPath();
+            podCtx.ellipse(130, 0, 30, 20, 0, 0, Math.PI * 2);
+            podCtx.fill();
+
+            podCtx.restore();
+
+            // Update rotation
+            podRotation += 0.01;
+            requestAnimationFrame(drawPod);
+        }
+
+        drawPod();
+
+        // Pod controls
+        document.getElementById('rotate-left').addEventListener('click', () => {
+            podRotation -= 0.5;
+        });
+
+        document.getElementById('rotate-right').addEventListener('click', () => {
+            podRotation += 0.5;
+        });
+
+        // ==================== CUSTOM CURSOR ====================
+        const cursor = document.getElementById('cursor');
+
+        document.addEventListener('mousemove', (e) => {
+            cursor.style.left = e.clientX - 10 + 'px';
+            cursor.style.top = e.clientY - 10 + 'px';
+        });
+
+        document.addEventListener('mouseleave', () => {
+            cursor.style.opacity = '0';
+        });
+
+        document.addEventListener('mouseenter', () => {
+            cursor.style.opacity = '1';
+        });
+
+        // ==================== DOWNLOAD REPORT ====================
+        document.getElementById('download-report').addEventListener('click', (e) => {
+            e.preventDefault();
+            alert('Full Feasibility Report will be available at the presentation. Meet us at IIT Delhi!');
+        });
+
+        // ==================== NAVIGATION SCROLL EFFECT ====================
+        window.addEventListener('scroll', () => {
+            const nav = document.getElementById('nav');
+            if(window.scrollY > 100) {
+                nav.classList.add('scrolled');
+            } else {
+                nav.classList.remove('scrolled');
+            }
+        });
+
+        // ==================== STATION HOVER ====================
+        document.querySelectorAll('.station-item').forEach(item => {
+            item.addEventListener('mouseenter', () => {
+                // Could highlight station on map
+            });
+        });
+    </script>
 </body>
 </html>
