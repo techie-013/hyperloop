@@ -30,7 +30,7 @@ This project is intended for:
 - Portfolio showcase  
 
 ## 📸 Preview  
-_Add screenshots or demo link here_
+(https://hyperloopgarud.vercel.app/)
 
 ## 🔮 Future Scope  
 - Add backend for real-time data simulation  
